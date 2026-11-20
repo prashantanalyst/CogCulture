@@ -2,7 +2,7 @@ from __future__ import annotations
 import random
 import time
 import anthropic
-from . import config
+import config
 
 RETRY_STATUS = {408, 409, 429, 500, 502, 503, 504, 529}
 
