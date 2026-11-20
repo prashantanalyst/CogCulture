@@ -7,14 +7,17 @@ from pathlib import Path
 
 import streamlit as st
 
-from factcheck import config
-from factcheck.llm import friendly_error, make_client
-from factcheck.pdf_extract import PDFError
-from factcheck.pipeline import run_factcheck
+import config
+from llm import friendly_error, make_client
+from pdf_extract import PDFError
+from pipeline import run_factcheck
 
 st.set_page_config(page_title="Truth Layer | PDF Fact-Checker", page_icon="🔎", layout="wide")
 
-SAMPLE = Path(__file__).parent / "samples" / "trap_document.pdf"
+# Sample file is at repo root, not in samples/ folder - check both places
+_sample_in_samples = Path(__file__).parent / "samples" / "trap_document.pdf"
+_sample_in_root = Path(__file__).parent / "trap_document.pdf"
+SAMPLE = _sample_in_samples if _sample_in_samples.exists() else _sample_in_root
 STYLE = {  # verdict: (text, background, glyph)
     "Verified": ("#0F7B5A", "#E3F8F0", "✓"),
     "Inaccurate": ("#9A5B00", "#FFF3D6", "!"),
@@ -33,18 +36,15 @@ st.markdown("""
 .kpi b{font-size:2rem;display:block;line-height:1.1}
 </style>""", unsafe_allow_html=True)
 
-
 def secret_key():
     try:
         return st.secrets.get("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_API_KEY") or ""
     except Exception:
         return os.getenv("ANTHROPIC_API_KEY", "")
 
-
 def badge(v):
     fg, bg, g = STYLE.get(v, STYLE["Error"])
     return f'<span class="badge" style="color:{fg};background:{bg}">{g} {v}</span>'
-
 
 def to_csv(report):
     buf = io.StringIO()
@@ -54,7 +54,6 @@ def to_csv(report):
         w.writerow([r.claim.id, r.claim.page or "", r.claim.category, r.claim.text, r.verdict, r.confidence,
                     r.real_fact, r.explanation, " | ".join(s.url for s in r.sources)])
     return buf.getvalue()
-
 
 with st.sidebar:
     st.header("Settings")
